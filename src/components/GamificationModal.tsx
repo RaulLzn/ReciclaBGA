@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEpicStore, AVAILABLE_BADGES, ActionType } from '../store/epicStore';
-import { Trophy, X, Home, BookOpen, Briefcase, Share2, Medal, Award, Star, MapPin } from 'lucide-react';
+import { Trophy, X, Home, BookOpen, Briefcase, Share2, Medal, Award, Star, MapPin, ShoppingBag, Tag, ChevronRight } from 'lucide-react';
 
 const MOCK_LEADERBOARD = [
   { id: '1', name: 'María Gómez', area: 'Bucaramanga', points: 450 },
@@ -9,6 +9,13 @@ const MOCK_LEADERBOARD = [
   { id: '3', name: 'Ana Silva', area: 'Piedecuesta', points: 380 },
   { id: '4', name: 'Juan Pérez', area: 'Girón', points: 350 },
   { id: '5', name: 'Laura Torres', area: 'Bucaramanga', points: 310 },
+];
+
+const MOCK_REWARDS = [
+  { id: 'r1', title: '15% Dto. Café Local', sponsor: 'Cafés de Santander', cost: 50, desc: 'Aplica para todas las bebidas a base de espresso.', icon: '☕' },
+  { id: 'r2', title: 'Bolsa Ecológica Tela', sponsor: 'Mercados BGA', cost: 120, desc: 'Reclámala en cualquier punto principal mostrando el código.', icon: '🛍️' },
+  { id: 'r3', title: '2x1 Cine Colombia', sponsor: 'Cine Cacique', cost: 300, desc: 'Válido de martes a jueves en salas 2D.', icon: '🎫' },
+  { id: 'r4', title: ' Hamburguesa 50% Off', sponsor: 'El Garaje/Ruitoque', cost: 500, desc: 'Mitad de precio en combo clásico.', icon: '🍔' },
 ];
 
 export function GamificationModal() {
@@ -19,10 +26,12 @@ export function GamificationModal() {
     badges, 
     registerAction,
     registeredActions,
-    isMinigameActive
+    isMinigameActive,
+    redeemReward,
+    redeemedRewards
   } = useEpicStore();
 
-  const [activeTab, setActiveTab] = useState<'actions' | 'badges' | 'leaderboard'>('actions');
+  const [activeTab, setActiveTab] = useState<'actions' | 'rewards' | 'badges' | 'leaderboard'>('actions');
 
   if (!isGamificationModalOpen || isMinigameActive) return null;
 
@@ -64,24 +73,30 @@ export function GamificationModal() {
           </div>
 
           {/* Navigation */}
-          <div className="flex border-b border-slate-800 bg-slate-900/30 px-6">
+          <div className="flex border-b border-slate-800 bg-slate-900/30 px-6 overflow-x-auto scrollbar-none">
             <button 
               onClick={() => setActiveTab('actions')}
-              className={`py-4 px-6 font-bold text-sm transition-colors border-b-2 ${activeTab === 'actions' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+              className={`py-4 px-6 font-bold text-sm transition-colors border-b-2 whitespace-nowrap ${activeTab === 'actions' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
             >
               Registrar Acciones
             </button>
             <button 
+              onClick={() => setActiveTab('rewards')}
+              className={`py-4 px-4 font-bold text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === 'rewards' ? 'border-amber-400 text-amber-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+            >
+              <ShoppingBag size={16} /> Eco-Tienda
+            </button>
+            <button 
               onClick={() => setActiveTab('badges')}
-              className={`py-4 px-6 font-bold text-sm transition-colors border-b-2 ${activeTab === 'badges' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+              className={`py-4 px-6 font-bold text-sm transition-colors border-b-2 whitespace-nowrap ${activeTab === 'badges' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
             >
               Insignias ({badges.length}/{AVAILABLE_BADGES.length})
             </button>
             <button 
               onClick={() => setActiveTab('leaderboard')}
-              className={`py-4 px-6 font-bold text-sm transition-colors border-b-2 ${activeTab === 'leaderboard' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+              className={`py-4 px-6 font-bold text-sm transition-colors border-b-2 whitespace-nowrap ${activeTab === 'leaderboard' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
             >
-              Clasificación AMB
+              Liga BGA
             </button>
           </div>
 
@@ -152,6 +167,64 @@ export function GamificationModal() {
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Rewards Tab */}
+            {activeTab === 'rewards' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-2xl p-5 mb-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-black text-amber-400 mb-1 flex items-center gap-2">
+                        <ShoppingBag size={20} />
+                        Eco-Tienda Local
+                      </h3>
+                      <p className="text-sm text-slate-300">Canjea tus Puntos de Impacto por cupones de descuento en comercios aliados de Bucaramanga y el área metropolitana.</p>
+                      <span className="inline-block mt-3 text-xs bg-slate-900/50 text-slate-400 px-3 py-1 rounded-full border border-slate-700/50">
+                        ¿Eres empresa? <a href="#" className="text-cyan-400 font-bold hover:underline">Suma tu negocio aquí</a>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {MOCK_REWARDS.map(reward => {
+                    const isRedeemed = redeemedRewards.includes(reward.id);
+                    const canAfford = points >= reward.cost;
+                    
+                    return (
+                      <div key={reward.id} className="bg-slate-800/40 border border-slate-700/50 rounded-2xl overflow-hidden flex flex-col justify-between">
+                        <div className="p-5">
+                          <div className="flex justify-between items-start mb-3">
+                            <span className="text-3xl">{reward.icon}</span>
+                            <span className="bg-slate-900 px-3 py-1 rounded-full text-xs font-bold text-amber-400 flex items-center gap-1 border border-amber-500/20">
+                              <Tag size={12} /> {reward.cost} pts
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-white text-lg leading-tight mb-1">{reward.title}</h4>
+                          <p className="text-cyan-400 text-xs font-bold uppercase tracking-wider mb-2">{reward.sponsor}</p>
+                          <p className="text-slate-400 text-sm">{reward.desc}</p>
+                        </div>
+                        <div className="p-4 bg-slate-900/50 border-t border-slate-800">
+                          {isRedeemed ? (
+                            <button disabled className="w-full py-2 bg-emerald-500/20 text-emerald-400 font-bold rounded-xl border border-emerald-500/30">
+                              Cupón Adquirido
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => redeemReward(reward.id, reward.cost)}
+                              disabled={!canAfford}
+                              className={`w-full py-2 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${canAfford ? 'bg-amber-500 hover:bg-amber-400 text-white shadow-lg shadow-amber-500/20' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
+                            >
+                              {canAfford ? 'Canjear Ahora' : `Te faltan ${reward.cost - points} pts`}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

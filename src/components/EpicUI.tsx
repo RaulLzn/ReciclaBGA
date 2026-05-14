@@ -42,10 +42,10 @@ export function EpicUI() {
             </div>
             <div className="text-left pr-2">
               <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
-                Puntos de Impacto
+                Saldo de Puntos
               </p>
               <p className="text-xl md:text-2xl font-black text-white leading-none">
-                {points} <span className="text-xs md:text-sm text-amber-400">/ {totalPoints} pts</span>
+                {points}
               </p>
             </div>
           </div>

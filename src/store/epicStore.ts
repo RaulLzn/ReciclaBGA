@@ -90,6 +90,8 @@ export const AVAILABLE_BADGES: Badge[] = [
   { id: 'influencer', name: 'Eco-Influencer', description: 'Compartiste tus logros 3 veces.', icon: '📢', color: 'from-purple-400 to-pink-500' },
 ];
 
+export type TutorialStep = 'welcome' | 'navigation' | 'interact' | 'minigame' | 'store';
+
 interface AppState {
   activeZone: ZoneId;
   setActiveZone: (zone: ZoneId) => void;
@@ -99,6 +101,12 @@ interface AppState {
   animatingId: string | null;
   triggerAnimation: (id: string) => void;
   
+  // Tutorial
+  seenTutorials: TutorialStep[];
+  markTutorialSeen: (step: TutorialStep) => void;
+  currentTutorial: TutorialStep | null;
+  setCurrentTutorial: (step: TutorialStep | null) => void;
+
   // Gamification
   isGamificationModalOpen: boolean;
   setGamificationModalOpen: (open: boolean) => void;
@@ -106,6 +114,11 @@ interface AppState {
   registerAction: (type: ActionType) => void;
   badges: string[];
   checkBadges: () => void;
+  
+  // Economy / Rewards
+  redeemedRewards: string[];
+  redeemReward: (rewardId: string, cost: number) => boolean;
+
   // Minigame
   isMinigameActive: boolean;
   setMinigameActive: (active: boolean) => void;
@@ -116,7 +129,13 @@ interface AppState {
 
 export const useEpicStore = create<AppState>((set, get) => ({
   activeZone: 'overview',
-  setActiveZone: (zone) => set({ activeZone: zone }),
+  setActiveZone: (zone) => {
+    set({ activeZone: zone });
+    const state = get();
+    if (zone !== 'overview' && !state.seenTutorials.includes('navigation')) {
+      set({ currentTutorial: 'navigation' });
+    }
+  },
   points: 0,
   discoveredTips: [],
   discoverTip: (tipId) => {
@@ -124,6 +143,10 @@ export const useEpicStore = create<AppState>((set, get) => ({
     if (!state.discoveredTips.includes(tipId)) {
       set({ discoveredTips: [...state.discoveredTips, tipId], points: state.points + 10 });
       get().checkBadges();
+      // Show interact tutorial on first interaction
+      if (!state.seenTutorials.includes('interact')) {
+        set({ currentTutorial: 'interact' });
+      }
     }
   },
   animatingId: null,
@@ -132,9 +155,25 @@ export const useEpicStore = create<AppState>((set, get) => ({
     setTimeout(() => set({ animatingId: null }), 1500);
   },
   
+  // Tutorial
+  seenTutorials: [],
+  markTutorialSeen: (step) => set((state) => ({ 
+    seenTutorials: [...state.seenTutorials, step],
+    currentTutorial: null
+  })),
+  currentTutorial: 'welcome', // Start with welcome tutorial
+  setCurrentTutorial: (step) => set({ currentTutorial: step }),
+
   // Gamification
   isGamificationModalOpen: false,
-  setGamificationModalOpen: (open) => set({ isGamificationModalOpen: open }),
+  setGamificationModalOpen: (open) => {
+    set({ isGamificationModalOpen: open });
+    const state = get();
+    // Show store tutorial if they open the modal, have enough points for the cheapest reward, and haven't seen it
+    if (open && state.points >= 50 && !state.seenTutorials.includes('store')) {
+       set({ currentTutorial: 'store' });
+    }
+  },
   registeredActions: [],
   badges: [],
   registerAction: (type) => {
@@ -189,9 +228,29 @@ export const useEpicStore = create<AppState>((set, get) => ({
     }
   },
   
+  // Economy / Rewards
+  redeemedRewards: [],
+  redeemReward: (rewardId, cost) => {
+    const state = get();
+    if (state.points >= cost && !state.redeemedRewards.includes(rewardId)) {
+      set({ 
+        points: state.points - cost,
+        redeemedRewards: [...state.redeemedRewards, rewardId]
+      });
+      return true; // Success
+    }
+    return false; // Not enough points or already redeemed
+  },
+
   // Minigame
   isMinigameActive: false,
-  setMinigameActive: (active) => set({ isMinigameActive: active }),
+  setMinigameActive: (active) => {
+    set({ isMinigameActive: active });
+    const state = get();
+    if (active && !state.seenTutorials.includes('minigame')) {
+      set({ currentTutorial: 'minigame' });
+    }
+  },
   minigameScore: 0,
   addMinigameScore: (points) => set((state) => ({ minigameScore: state.minigameScore + points, points: state.points + points })),
   resetMinigame: () => set({ minigameScore: 0 }),

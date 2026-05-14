@@ -2,6 +2,7 @@ import { EpicExperience } from "./components/EpicExperience";
 import { EpicUI } from "./components/EpicUI";
 import { GamificationModal } from "./components/GamificationModal";
 import { MinigameUI } from "./components/MinigameUI";
+import { TutorialOverlay } from "./components/TutorialOverlay";
 
 export default function App() {
   return (
@@ -10,6 +11,7 @@ export default function App() {
       <EpicUI />
       <GamificationModal />
       <MinigameUI />
+      <TutorialOverlay />
     </div>
   );
 }
