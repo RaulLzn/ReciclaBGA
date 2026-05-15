@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEpicStore, AVAILABLE_BADGES, ActionType } from '../store/epicStore';
-import { Trophy, X, Home, BookOpen, Briefcase, Share2, Medal, Award, Star, MapPin, ShoppingBag, Tag, ChevronRight } from 'lucide-react';
+import { Trophy, X, Home, BookOpen, Briefcase, Share2, Medal, Award, Star, MapPin, ShoppingBag, Tag, ChevronRight, Globe, Building2, Recycle, CloudSun, Users, CheckSquare, Scale, Building, CheckCircle2, QrCode } from 'lucide-react';
 
 const MOCK_LEADERBOARD = [
   { id: '1', name: 'María Gómez', area: 'Bucaramanga', points: 450 },
@@ -28,10 +28,37 @@ export function GamificationModal() {
     registeredActions,
     isMinigameActive,
     redeemReward,
-    redeemedRewards
+    redeemedRewards,
+    verifyCode,
+    usedCodes
   } = useEpicStore();
 
-  const [activeTab, setActiveTab] = useState<'actions' | 'rewards' | 'badges' | 'leaderboard'>('actions');
+  const [activeTab, setActiveTab] = useState<'actions' | 'rewards' | 'badges' | 'leaderboard' | 'impact' | 'partner'>('actions');
+  const [partnerFormStatus, setPartnerFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+  
+  const [verificationCode, setVerificationCode] = useState('');
+  const [codeStatus, setCodeStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [codeMessage, setCodeMessage] = useState('');
+
+  const handleVerifyCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!verificationCode) return;
+
+    const pts = verifyCode(verificationCode);
+    if (pts > 0) {
+      setCodeStatus('success');
+      setCodeMessage(`¡Código válido! Has ganado ${pts} puntos.`);
+      setVerificationCode('');
+    } else {
+      setCodeStatus('error');
+      if (usedCodes.includes(verificationCode.trim().toUpperCase())) {
+         setCodeMessage('Este código ya fue utilizado.');
+      } else {
+         setCodeMessage('Código inválido. Intenta de nuevo.');
+      }
+    }
+    setTimeout(() => { setCodeStatus('idle'); setCodeMessage(''); }, 3000);
+  };
 
   if (!isGamificationModalOpen || isMinigameActive) return null;
 
@@ -98,6 +125,12 @@ export function GamificationModal() {
             >
               Liga BGA
             </button>
+            <button 
+              onClick={() => setActiveTab('impact')}
+              className={`py-4 px-6 font-bold text-sm transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === 'impact' ? 'border-emerald-400 text-emerald-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+            >
+              <Globe size={16} /> Impacto ODS
+            </button>
           </div>
 
           {/* Content */}
@@ -106,6 +139,49 @@ export function GamificationModal() {
             {/* Actions Tab */}
             {activeTab === 'actions' && (
               <div className="space-y-6">
+                {/* QR / Code Verification */}
+                <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-2xl p-5">
+                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                     <div className="flex-1">
+                       <h3 className="text-lg font-black text-cyan-400 mb-1 flex items-center gap-2">
+                         <QrCode size={20} />
+                         Validar en Puntos de Reciclaje
+                       </h3>
+                       <p className="text-sm text-slate-300">Ingresa el código al dejar tus residuos en una Estación de Clasificación (ECA) o Contenedor Inteligente.</p>
+                     </div>
+                     <form onSubmit={handleVerifyCode} className="w-full md:w-auto flex flex-col items-end">
+                        <div className="flex w-full md:w-auto">
+                          <input 
+                            type="text" 
+                            name="verificationCode"
+                            placeholder="Ej. BGA-RECICLA-500" 
+                            value={verificationCode}
+                            onChange={(e) => setVerificationCode(e.target.value)}
+                            className="bg-slate-900 border border-slate-700 border-r-0 rounded-l-xl px-4 py-2 text-white focus:outline-none focus:border-cyan-500 w-full md:w-48 uppercase"
+                          />
+                          <button 
+                            type="submit"
+                            className="bg-cyan-500 hover:bg-cyan-400 text-white font-bold px-4 py-2 rounded-r-xl transition-colors whitespace-nowrap"
+                          >
+                            Verificar
+                          </button>
+                        </div>
+                        <AnimatePresence>
+                          {codeMessage && (
+                            <motion.p
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className={`text-xs mt-2 w-full text-center md:text-right font-bold ${codeStatus === 'success' ? 'text-emerald-400' : 'text-red-400'}`}
+                            >
+                              {codeMessage}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
+                     </form>
+                   </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <ActionCard 
                     title="Reciclaje en Casa" 
@@ -183,7 +259,7 @@ export function GamificationModal() {
                       </h3>
                       <p className="text-sm text-slate-300">Canjea tus Puntos de Impacto por cupones de descuento en comercios aliados de Bucaramanga y el área metropolitana.</p>
                       <span className="inline-block mt-3 text-xs bg-slate-900/50 text-slate-400 px-3 py-1 rounded-full border border-slate-700/50">
-                        ¿Eres empresa? <a href="#" className="text-cyan-400 font-bold hover:underline">Suma tu negocio aquí</a>
+                        ¿Eres empresa? <button onClick={(e) => { e.preventDefault(); setActiveTab('partner'); }} className="text-cyan-400 font-bold hover:underline ml-1">Suma tu negocio aquí</button>
                       </span>
                     </div>
                   </div>
@@ -298,6 +374,136 @@ export function GamificationModal() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Impact & ODS Tab */}
+            {activeTab === 'impact' && (
+              <div className="space-y-8">
+                {/* Metrics Section */}
+                <div>
+                  <h3 className="text-xl font-black text-emerald-400 mb-4 flex items-center gap-2">
+                    <Globe size={24} /> Plataforma en Números
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-cyan-900/20 border border-cyan-500/30 rounded-2xl p-4 text-center">
+                      <Users size={24} className="text-cyan-400 mx-auto mb-2" />
+                      <div className="text-3xl font-black text-white">1,245</div>
+                      <div className="text-[10px] sm:text-xs text-cyan-400 font-bold uppercase tracking-wider mt-1">Usuarios Activos</div>
+                    </div>
+                    <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-2xl p-4 text-center">
+                      <CheckSquare size={24} className="text-emerald-400 mx-auto mb-2" />
+                      <div className="text-3xl font-black text-white">{5430 + registeredActions.length}</div>
+                      <div className="text-[10px] sm:text-xs text-emerald-400 font-bold uppercase tracking-wider mt-1">Acciones<br className="hidden sm:block" /> Registradas</div>
+                    </div>
+                    <div className="bg-amber-900/20 border border-amber-500/30 rounded-2xl p-4 text-center">
+                      <Scale size={24} className="text-amber-400 mx-auto mb-2" />
+                      <div className="text-2xl sm:text-3xl font-black text-white">{12450 + (registeredActions.length * 2.5)} <span className="text-lg">kg</span></div>
+                      <div className="text-[10px] sm:text-xs text-amber-400 font-bold uppercase tracking-wider mt-1">Residuos<br className="hidden sm:block" /> Reciclados</div>
+                    </div>
+                    <div className="bg-purple-900/20 border border-purple-500/30 rounded-2xl p-4 text-center">
+                      <Building size={24} className="text-purple-400 mx-auto mb-2" />
+                      <div className="text-3xl font-black text-white">12</div>
+                      <div className="text-[10px] sm:text-xs text-purple-400 font-bold uppercase tracking-wider mt-1">Instituciones<br className="hidden sm:block" /> Aliadas</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ODS Section */}
+                <div>
+                  <h3 className="text-lg font-black text-white mb-4">Alineación Organizacional (ODS)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     {/* ODS 11 */}
+                     <div className="bg-slate-800/40 border border-orange-500/30 rounded-2xl p-5 hover:bg-slate-800 transition-colors flex flex-col items-center text-center">
+                       <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-orange-500/20">
+                         <Building2 className="text-white" size={28} />
+                       </div>
+                       <h4 className="font-black text-white mb-1">ODS 11</h4>
+                       <p className="text-sm font-bold text-orange-400 mb-3 leading-tight">Ciudades y comunidades sostenibles</p>
+                       <p className="text-xs text-slate-400 leading-relaxed">Promoviendo prácticas responsables de gestión de residuos en Bucaramanga.</p>
+                     </div>
+                     {/* ODS 12 */}
+                     <div className="bg-slate-800/40 border border-amber-600/30 rounded-2xl p-5 hover:bg-slate-800 transition-colors flex flex-col items-center text-center">
+                       <div className="w-14 h-14 bg-amber-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-amber-600/20">
+                         <Recycle className="text-white" size={28} />
+                       </div>
+                       <h4 className="font-black text-white mb-1">ODS 12</h4>
+                       <p className="text-sm font-bold text-amber-500 mb-3 leading-tight">Producción y consumo responsables</p>
+                       <p className="text-xs text-slate-400 leading-relaxed">Fomentando el reciclaje y el uso eficiente de los recursos.</p>
+                     </div>
+                     {/* ODS 13 */}
+                     <div className="bg-slate-800/40 border border-emerald-600/30 rounded-2xl p-5 hover:bg-slate-800 transition-colors flex flex-col items-center text-center">
+                       <div className="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-emerald-600/20">
+                         <CloudSun className="text-white" size={28} />
+                       </div>
+                       <h4 className="font-black text-white mb-1">ODS 13</h4>
+                       <p className="text-sm font-bold text-emerald-400 mb-3 leading-tight">Acción por el clima</p>
+                       <p className="text-xs text-slate-400 leading-relaxed">Reduciendo la cantidad de residuos y las emisiones asociadas a su manejo.</p>
+                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Partner Tab */}
+            {activeTab === 'partner' && (
+              <div className="space-y-6 max-w-2xl mx-auto">
+                <div className="text-center mb-8">
+                  <div className="w-16 h-16 bg-cyan-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-cyan-500/30">
+                    <Briefcase size={32} className="text-cyan-400" />
+                  </div>
+                  <h3 className="text-2xl font-black text-white mb-2">Únete a nuestra red de aliados</h3>
+                  <p className="text-slate-400">Atrae nuevos clientes conscientes del medio ambiente ofreciendo recompensas por reciclar. ¡Mejora tu impacto social corporativo y visibilidad en la ciudad!</p>
+                </div>
+
+                {partnerFormStatus === 'success' ? (
+                  <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-2xl p-8 text-center">
+                    <CheckCircle2 size={48} className="text-emerald-400 mx-auto mb-4" />
+                    <h4 className="text-xl font-bold text-white mb-2">¡Solicitud Enviada!</h4>
+                    <p className="text-slate-300 mb-6">Nuestro equipo te contactará pronto para finalizar los detalles de la alianza.</p>
+                    <button onClick={() => { setPartnerFormStatus('idle'); setActiveTab('rewards'); }} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-6 rounded-xl transition-colors">
+                      Volver a recompensas
+                    </button>
+                  </div>
+                ) : (
+                  <form 
+                    className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 space-y-4"
+                    onSubmit={(e) => { 
+                      e.preventDefault(); 
+                      setPartnerFormStatus('submitting'); 
+                      setTimeout(() => setPartnerFormStatus('success'), 1500); 
+                    }}
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Nombre de la Empresa</label>
+                        <input required type="text" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-cyan-500" placeholder="Ej: Café Búcaro" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Sector</label>
+                        <select required className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-cyan-500 appearance-none">
+                          <option value="">Selecciona...</option>
+                          <option value="gastronomia">Gastronomía</option>
+                          <option value="comercio">Comercio Minorista</option>
+                          <option value="servicios">Servicios</option>
+                          <option value="entretenimiento">Entretenimiento</option>
+                          <option value="otro">Otro</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Incentivo Propuesto</label>
+                      <input required type="text" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-cyan-500" placeholder="Ej: 10% de descuento en la factura" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Correo de Contacto</label>
+                      <input required type="email" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-cyan-500" placeholder="contacto@empresa.com" />
+                    </div>
+                    <button type="submit" disabled={partnerFormStatus === 'submitting'} className="w-full mt-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-70">
+                      {partnerFormStatus === 'submitting' ? 'Enviando...' : 'Enviar Solicitud de Alianza'}
+                    </button>
+                  </form>
+                )}
               </div>
             )}
 

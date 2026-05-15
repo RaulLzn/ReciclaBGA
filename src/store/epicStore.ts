@@ -118,6 +118,10 @@ interface AppState {
   // Economy / Rewards
   redeemedRewards: string[];
   redeemReward: (rewardId: string, cost: number) => boolean;
+  
+  // Verification
+  usedCodes: string[];
+  verifyCode: (code: string) => number;
 
   // Minigame
   isMinigameActive: boolean;
@@ -240,6 +244,29 @@ export const useEpicStore = create<AppState>((set, get) => ({
       return true; // Success
     }
     return false; // Not enough points or already redeemed
+  },
+
+  // Verification
+  usedCodes: [],
+  verifyCode: (code) => {
+    const state = get();
+    const upperCode = code.trim().toUpperCase();
+    
+    if (!upperCode || state.usedCodes.includes(upperCode)) return 0;
+    
+    let points = 0;
+    if (upperCode === 'BGA-RECICLA-500') points = 500;
+    else if (upperCode === 'ECA-BGA-100') points = 100;
+    else if (upperCode === 'UNIVERSIDAD-200') points = 200;
+
+    if (points > 0) {
+      set({ 
+        points: state.points + points, 
+        usedCodes: [...state.usedCodes, upperCode] 
+      });
+      return points;
+    }
+    return 0;
   },
 
   // Minigame
